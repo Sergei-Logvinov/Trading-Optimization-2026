@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICT 2026 · Analysis Bot</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap');
+
+:root {
+  --bg: #07080f;
+  --s1: #0e1018;
+  --s2: #141720;
+  --s3: #1a1f2e;
+  --border: #1e2538;
+  --border2: #2a3350;
+  --bull: #00e676;
+  --bear: #ff1744;
+  --accent: #2979ff;
+  --warn: #ffc400;
+  --purple: #d500f9;
+  --text: #e8eaf6;
+  --muted: #4a5380;
+  --muted2: #7986cb;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scanline effect */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Grid */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(41,121,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(41,121,255,0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 24px 16px 80px; }
+
+/* ── TOP BAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+  animation: fadeDown 0.5s ease both;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 36px; height: 36px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Syne', sans-serif;
+}
+
+.logo-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.logo-text span { color: var(--accent); }
+
+.logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 2px; }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.clock {
+  font-size: 13px;
+  color: var(--muted2);
+  background: var(--s2);
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.session-pill {
+  padding: 5px 12px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border: 1px solid;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ── INPUT PANEL ── */
+.input-panel {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 20px;
+  animation: fadeDown 0.5s 0.05s ease both;
+}
+
+.panel-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--muted2);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.tf-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tf-btn {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tf-btn:hover { border-color: var(--accent); color: var(--text); }
+.tf-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.candles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.candle-row {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.candle-row-label {
+  font-size: 10px;
+  color: var(--muted2);
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.candle-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.ci-wrap { display: flex; flex-direction: column; gap: 3px; }
+.ci-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+
+.ci {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.ci:focus { border-color: var(--accent); }
+
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.5px;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #5591ff; transform: translateY(-1px); }
+.btn-secondary { background: var(--s3); color: var(--muted2); border: 1px solid var(--border2); }
+.btn-secondary:hover { color: var(--text); border-color: var(--muted2); }
+.btn-load { background: var(--s3); color: var(--warn); border: 1px solid rgba(255,196,0,0.3); }
+
+.csv-area {
+  display: none;
+  margin-top: 16px;
+}
+.csv-area.visible { display: block; }
+
+.csv-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px dashed var(--border2);
+  border-radius: 10px;
+  padding: 16px;
+  color: var(--muted2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  resize: vertical;
+  min-height: 120px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.csv-input:focus { border-color: var(--accent); color: var(--text); }
+
+/* ── RESULTS ── */
+#results { display: none; }
+#results.visible { display: block; }
+
+/* BIAS CARD */
+.bias-card {
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  animation: fadeUp 0.4s ease both;
+}
+.bias-card.bear {
+  background: linear-gradient(135deg, rgba(255,23,68,0.12) 0%, var(--s1) 70%);
+  border: 1px solid rgba(255,23,68,0.35);
+}
+.bias-card.bull {
+  background: linear-gradient(135deg, rgba(0,230,118,0.1) 0%, var(--s1) 70%);
+  border: 1px solid rgba(0,230,118,0.3);
+}
+.bias-card.neutral {
+  background: linear-gradient(135deg, rgba(255,196,0,0.08) 0%, var(--s1) 70%);
+  border: 1px solid rgba(255,196,0,0.25);
+}
+
+.bias-arrow { font-size: 48px; line-height: 1; }
+.bias-main { flex: 1; }
+.bias-label { font-size: 10px; letter-spacing: 3px; color: var(--muted2); margin-bottom: 4px; }
+.bias-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+}
+.bias-card.bear .bias-value { color: var(--bear); }
+.bias-card.bull .bias-value { color: var(--bull); }
+.bias-card.neutral .bias-value { color: var(--warn); }
+.bias-reason { font-size: 12px; color: var(--muted2); margin-top: 6px; }
+
+.bias-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.bstat {
+  text-align: center;
+  background: rgba(0,0,0,0.3);
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.bstat-val { font-size: 16px; font-weight: 700; }
+.bstat-label { font-size: 10px; color: var(--muted2); margin-top: 2px; }
+
+/* ── CHART ── */
+.chart-wrap {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+  animation: fadeUp 0.4s 0.05s ease both;
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chart-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 12px;
+  font-size: 10px;
+  flex-wrap: wrap;
+}
+
+.leg-item { display: flex; align-items: center; gap: 5px; color: var(--muted2); }
+.leg-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+canvas#mainChart {
+  width: 100%;
+  height: 320px;
+  display: block;
+  border-radius: 8px;
+}
+
+/* ── ZONES TABLE ── */
+.zones-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  animation: fadeUp 0.4s 0.1s ease both;
+}
+@media (max-width: 650px) { .zones-grid { grid-template-columns: 1fr; } }
+
+.zone-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.zone-header {
+  padding: 12px 16px;
+  font-size: 10px;
+  letter-spacing: 3px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zone-header.fvg { background: rgba(41,121,255,0.12); color: var(--accent); border-bottom: 1px solid rgba(41,121,255,0.2); }
+.zone-header.liq { background: rgba(255,196,0,0.08); color: var(--warn); border-bottom: 1px solid rgba(255,196,0,0.15); }
+.zone-header.setup { background: rgba(255,23,68,0.1); color: var(--bear); border-bottom: 1px solid rgba(255,23,68,0.2); }
+.zone-header.setup.bull { background: rgba(0,230,118,0.08); color: var(--bull); border-bottom: 1px solid rgba(0,230,118,0.15); }
+
+.zone-body { padding: 12px 16px; }
+
+.zone-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.zone-item:last-child { border-bottom: none; }
+.zone-item-label { color: var(--muted2); }
+.zone-item-val { font-weight: 700; color: var(--text); }
+.zone-item-val.bear { color: var(--bear); }
+.zone-item-val.bull { color: var(--bull); }
+.zone-item-val.warn { color: var(--warn); }
+.zone-item-val.acc { color: var(--accent); }
+
+/* ── SETUP CARD ── */
+.setup-main {
+  background: var(--s1);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  animation: fadeUp 0.4s 0.15s ease both;
+}
+
+.setup-top {
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.setup-top.bear { background: linear-gradient(90deg, rgba(255,23,68,0.15) 0%, transparent 60%); border-bottom: 1px solid rgba(255,23,68,0.2); }
+.setup-top.bull { background: linear-gradient(90deg, rgba(0,230,118,0.1) 0%, transparent 60%); border-bottom: 1px solid rgba(0,230,118,0.15); }
+.setup-top.none { background: var(--s2); border-bottom: 1px solid var(--border); }
+
+.setup-dir {
+  font-family: 'Syne', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+}
+.setup-dir.bear { color: var(--bear); }
+.setup-dir.bull { color: var(--bull); }
+
+.setup-body { padding: 0; }
+
+.setup-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 12px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  align-items: center;
+}
+.setup-row:last-child { border-bottom: none; }
+.setup-key { color: var(--muted2); font-size: 11px; }
+.setup-val { color: var(--text); font-weight: 500; }
+
+/* ── KILL ZONES ── */
+.kz-bar {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  animation: fadeUp 0.4s 0.2s ease both;
+}
+
+.kz-title {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--muted2);
+  margin-bottom: 14px;
+}
+
+.kz-timeline {
+  display: flex;
+  gap: 4px;
+  height: 36px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.kz-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+  cursor: default;
+  border-radius: 4px;
+  position: relative;
+}
+
+.kz-seg.dead { background: var(--s3); color: var(--muted); flex: 2; }
+.kz-seg.asia { background: rgba(213,0,249,0.2); color: var(--purple); border: 1px solid rgba(213,0,249,0.3); flex: 6; }
+.kz-seg.london { background: rgba(255,23,68,0.15); color: var(--bear); border: 1px solid rgba(255,23,68,0.25); flex: 3; }
+.kz-seg.premarket { background: rgba(255,196,0,0.12); color: var(--warn); border: 1px solid rgba(255,196,0,0.2); flex: 2; }
+.kz-seg.ny { background: rgba(0,230,118,0.1); color: var(--bull); border: 1px solid rgba(0,230,118,0.2); flex: 2; }
+.kz-seg.active { box-shadow: 0 0 12px currentColor; transform: scaleY(1.1); z-index: 2; }
+
+.kz-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted); }
+
+.current-session-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+/* ── LOG ── */
+.analysis-log {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--muted2);
+  max-height: 200px;
+  overflow-y: auto;
+  animation: fadeUp 0.4s 0.25s ease both;
+}
+
+.log-line { margin-bottom: 2px; }
+.log-line.ok { color: var(--bull); }
+.log-line.warn { color: var(--warn); }
+.log-line.bear { color: var(--bear); }
+.log-line.info { color: var(--accent); }
+.log-line.head { color: var(--text); font-weight: 700; margin-top: 8px; }
+
+/* ── MISC ── */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.badge-bear { background: rgba(255,23,68,0.15); color: var(--bear); border: 1px solid rgba(255,23,68,0.3); }
+.badge-bull { background: rgba(0,230,118,0.1); color: var(--bull); border: 1px solid rgba(0,230,118,0.2); }
+.badge-warn { background: rgba(255,196,0,0.1); color: var(--warn); border: 1px solid rgba(255,196,0,0.2); }
+.badge-info { background: rgba(41,121,255,0.12); color: var(--accent); border: 1px solid rgba(41,121,255,0.25); }
+
+.disclaimer {
+  font-size: 10px;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 32px;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  line-height: 1.7;
+}
+
+@keyframes fadeDown { from { opacity:0; transform: translateY(-10px); } to { opacity:1; transform: none; } }
+@keyframes fadeUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-text">ICT <span>2026</span> Bot</div>
+        <div class="logo-sub">Smart Money Analyzer</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock" id="clockEl">--:-- EST</div>
+      <div class="session-pill" id="sessionPill" style="color:#4a5380;border-color:#1e2538;">● ЗАГРУЗКА</div>
+    </div>
+  </div>
+
+  <!-- KILL ZONE BAR -->
+  <div class="kz-bar">
+    <div class="kz-title">▸ KILL ZONES — 24H TIMELINE (EST)</div>
+    <div class="kz-timeline">
+      <div class="kz-seg asia" id="kz-asia">🌏 ASIA 19–05</div>
+      <div class="kz-seg dead" id="kz-dead">DEAD 05–07</div>
+      <div class="kz-seg premarket" id="kz-pre">⚡ PRE 07–09:30</div>
+      <div class="kz-seg ny" id="kz-ny">🔔 NY 09:30–12</div>
+      <div class="kz-seg dead">PM 12–19</div>
+    </div>
+    <div class="kz-labels">
+      <span>19:00</span><span>21:00</span><span>00:00</span><span>02:00</span><span>05:00</span><span>07:00</span><span>09:30</span><span>12:00</span><span>19:00</span>
+    </div>
+    <div class="current-session-box" id="currentSessionBox" style="background:var(--s2);border:1px solid var(--border);">
+      <span style="font-size:20px">⏳</span>
+      <div>
+        <div style="font-size:10px;color:var(--muted2);letter-spacing:2px;">ТЕКУЩАЯ СЕССИЯ</div>
+        <div id="currentSessionText" style="font-weight:700;color:var(--text);">Определяется...</div>
+      </div>
+      <div style="margin-left:auto;font-size:11px;color:var(--muted2);" id="nextSessionText"></div>
+    </div>
+  </div>
+
+  <!-- INPUT PANEL -->
+  <div class="input-panel">
+    <div class="panel-title">▸ ВВОД ДАННЫХ</div>
+
+    <div class="tf-selector">
+      <button class="tf-btn active" onclick="setTF(this,'1D')">1D</button>
+      <button class="tf-btn" onclick="setTF(this,'4H')">4H</button>
+      <button class="tf-btn" onclick="setTF(this,'1H')">1H</button>
+      <button class="tf-btn" onclick="setTF(this,'15M')">15M</button>
+      <button class="tf-btn" onclick="setTF(this,'5M')">5M</button>
+      <button class="tf-btn" onclick="setTF(this,'1M')">1M</button>
+    </div>
+
+    <div id="candlesContainer" class="candles-grid"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="runAnalysis()">▶ АНАЛИЗИРОВАТЬ</button>
+      <button class="btn btn-secondary" onclick="loadExample()">📊 Загрузить пример EUR/USD</button>
+      <button class="btn btn-load" onclick="toggleCSV()">📁 CSV / TradingView</button>
+      <button class="btn btn-secondary" onclick="clearAll()">✕ Очистить</button>
+    </div>
+
+    <div class="csv-area" id="csvArea">
+      <div style="font-size:11px;color:var(--muted2);margin-bottom:8px;">Вставь CSV из TradingView: time,open,high,low,close (каждая строка — свеча)</div>
+      <textarea class="csv-input" id="csvInput" placeholder="2026-03-06,1.15800,1.15964,1.15460,1.15667&#10;2026-03-05,1.16500,1.16800,1.15400,1.15800&#10;..."></textarea>
+      <button class="btn btn-primary" style="margin-top:10px;" onclick="parseCSV()">▶ Загрузить CSV</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+
+    <!-- BIAS -->
+    <div id="biasCard" class="bias-card bear"></div>
+
+    <!-- CHART -->
+    <div class="chart-wrap">
+      <div class="chart-header">
+        <div class="chart-title" id="chartTitle">График</div>
+        <div class="chart-legend">
+          <div class="leg-item"><div class="leg-dot" style="background:rgba(41,121,255,0.6)"></div>FVG</div>
+          <div class="leg-item"><div class="leg-dot" style="background:rgba(255,196,0,0.6)"></div>Equal H/L</div>
+          <div class="leg-item"><div class="leg-dot" style="background:rgba(255,23,68,0.5)"></div>Сопротивление</div>
+          <div class="leg-item"><div class="leg-dot" style="background:rgba(0,230,118,0.5)"></div>Поддержка</div>
+        </div>
+      </div>
+      <canvas id="mainChart"></canvas>
+    </div>
+
+    <!-- ZONES -->
+    <div class="zones-grid">
+      <div class="zone-card">
+        <div class="zone-header fvg">⬛ FVG ЗОНЫ</div>
+        <div class="zone-body" id="fvgZones"></div>
+      </div>
+      <div class="zone-card">
+        <div class="zone-header liq">◈ ЛИКВИДНОСТЬ</div>
+        <div class="zone-body" id="liqZones"></div>
+      </div>
+    </div>
+
+    <!-- SETUP -->
+    <div class="setup-main" id="setupCard"></div>
+
+    <!-- LOG -->
+    <div class="analysis-log" id="analysisLog"></div>
+
+  </div>
+
+  <div class="disclaimer">⚠ Только для образовательных целей на основе методологии ICT 2026. Не является финансовой рекомендацией. Торговля сопряжена с рисками.</div>
+</div>
+
+<script>
+// ─── STATE ───
+let currentTF = '1D';
+let candles = []; // [{o,h,l,c,t}]
+
+// ─── CLOCK & SESSIONS ───
+function updateClock() {
+  const now = new Date();
+  const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const h = est.getHours(), m = est.getMinutes();
+  const pad = n => String(n).padStart(2, '0');
+  document.getElementById('clockEl').textContent = `${pad(h)}:${pad(m)} EST`;
+
+  const hm = h + m / 60;
+  let session = '', color = '', icon = '', next = '';
+
+  if (hm >= 19 || hm < 2) { session = '🌏 Азиатская Kill Zone (19:00–02:00)'; color = '#d500f9'; icon = '🌏'; next = 'London Open в 02:00'; }
+  else if (hm >= 2 && hm < 5) { session = '🇬🇧 London Open Kill Zone (02:00–05:00)'; color = '#ff1744'; icon = '🇬🇧'; next = 'Мёртвое время с 05:00'; }
+  else if (hm >= 5 && hm < 7) { session = '💤 Мёртвое время (05:00–07:00)'; color = '#4a5380'; icon = '💤'; next = 'Pre-market NY в 07:00'; }
+  else if (hm >= 7 && hm < 9.5) { session = '⚡ Pre-market NY (07:00–09:30)'; color = '#ffc400'; icon = '⚡'; next = 'NY Open в 09:30'; }
+  else if (hm >= 9.5 && hm < 10.5) { session = '🔔 NY Opening Range (09:30–10:30)'; color = '#00e676'; icon = '🔔'; next = 'London Close в 10:00'; }
+  else if (hm >= 10 && hm < 11) { session = '🏁 London Close (10:00–11:00)'; color = '#00e676'; icon = '🏁'; next = 'PM Session 12:00+'; }
+  else if (hm >= 11 && hm < 19) { session = '😴 PM Session / Обед (11:00–19:00)'; color = '#4a5380'; icon = '😴'; next = 'Азия в 19:00'; }
+
+  document.getElementById('currentSessionText').textContent = session;
+  document.getElementById('currentSessionText').style.color = color;
+  document.getElementById('nextSessionText').textContent = '→ ' + next;
+
+  const pill = document.getElementById('sessionPill');
+  pill.textContent = '● ' + icon;
+  pill.style.color = color;
+  pill.style.borderColor = color + '55';
+
+  // Highlight active KZ
+  ['kz-asia','kz-dead','kz-pre','kz-ny'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  if (hm >= 19 || hm < 5) document.getElementById('kz-asia')?.classList.add('active');
+  else if (hm >= 5 && hm < 7) document.getElementById('kz-dead')?.classList.add('active');
+  else if (hm >= 7 && hm < 9.5) document.getElementById('kz-pre')?.classList.add('active');
+  else if (hm >= 9.5 && hm < 12) document.getElementById('kz-ny')?.classList.add('active');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── TF SELECTION ───
+function setTF(btn, tf) {
+  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTF = tf;
+  buildCandleInputs();
+}
+
+// ─── BUILD CANDLE INPUTS ───
+function buildCandleInputs() {
+  const count = { '1D': 10, '4H': 8, '1H': 8, '15M': 6, '5M': 6, '1M': 5 }[currentTF] || 8;
+  const container = document.getElementById('candlesContainer');
+  container.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const div = document.createElement('div');
+    div.className = 'candle-row';
+    div.innerHTML = `
+      <div class="candle-row-label">
+        <span>СВЕЧА ${i + 1} ${i === count - 1 ? '(ТЕКУЩАЯ)' : ''}</span>
+        <span style="color:var(--muted)">${currentTF}</span>
+      </div>
+      <div class="candle-inputs">
+        <div class="ci-wrap"><div class="ci-label">DATE</div><input class="ci" placeholder="06.03" id="t${i}"></div>
+        <div class="ci-wrap"><div class="ci-label">OPEN</div><input class="ci" placeholder="1.1580" id="o${i}" type="number" step="0.00001"></div>
+        <div class="ci-wrap"><div class="ci-label">HIGH</div><input class="ci" placeholder="1.1596" id="h${i}" type="number" step="0.00001"></div>
+        <div class="ci-wrap"><div class="ci-label">LOW</div><input class="ci" placeholder="1.1546" id="l${i}" type="number" step="0.00001"></div>
+        <div class="ci-wrap"><div class="ci-label">CLOSE</div><input class="ci" placeholder="1.1567" id="c${i}" type="number" step="0.00001"></div>
+      </div>`;
+    container.appendChild(div);
+  }
+}
+buildCandleInputs();
+
+// ─── LOAD EXAMPLE ───
+function loadExample() {
+  const data = [
+    { t:'06.03', o:1.16088, h:1.16212, l:1.15522, c:1.15660 },
+    { t:'05.03', o:1.16500, h:1.16750, l:1.15800, c:1.16088 },
+    { t:'04.03', o:1.17200, h:1.17450, l:1.16300, c:1.16500 },
+    { t:'03.03', o:1.17800, h:1.18100, l:1.16900, c:1.17200 },
+    { t:'28.02', o:1.18500, h:1.18700, l:1.17600, c:1.17800 },
+    { t:'27.02', o:1.18900, h:1.19200, l:1.18300, c:1.18500 },
+    { t:'26.02', o:1.19500, h:1.20100, l:1.19100, c:1.18900 },
+    { t:'25.02', o:1.19000, h:1.19800, l:1.18800, c:1.19500 },
+    { t:'24.02', o:1.18400, h:1.19200, l:1.18200, c:1.19000 },
+    { t:'21.02', o:1.17800, h:1.18600, l:1.17500, c:1.18400 },
+  ];
+  const count = document.querySelectorAll('.candle-row').length;
+  data.slice(0, count).reverse().forEach((d, i) => {
+    const idx = count - data.slice(0, count).length + i;
+    const ti = document.getElementById('t' + idx);
+    if (ti) { ti.value = d.t; document.getElementById('o'+idx).value = d.o; document.getElementById('h'+idx).value = d.h; document.getElementById('l'+idx).value = d.l; document.getElementById('c'+idx).value = d.c; }
+  });
+}
+
+// ─── CSV PARSE ───
+function toggleCSV() {
+  document.getElementById('csvArea').classList.toggle('visible');
+}
+
+function parseCSV() {
+  const raw = document.getElementById('csvInput').value.trim();
+  const lines = raw.split('\n').filter(l => l.trim());
+  candles = lines.map(line => {
+    const parts = line.split(',');
+    return { t: parts[0], o: +parts[1], h: +parts[2], l: +parts[3], c: +parts[4] };
+  }).filter(c => c.o && c.h && c.l && c.c);
+  if (candles.length > 0) runAnalysisWithData(candles);
+}
+
+// ─── COLLECT INPUTS ───
+function collectInputs() {
+  const count = document.querySelectorAll('.candle-row').length;
+  const data = [];
+  for (let i = 0; i < count; i++) {
+    const o = +document.getElementById('o'+i)?.value;
+    const h = +document.getElementById('h'+i)?.value;
+    const l = +document.getElementById('l'+i)?.value;
+    const c = +document.getElementById('c'+i)?.value;
+    const t = document.getElementById('t'+i)?.value || `C${i+1}`;
+    if (o && h && l && c) data.push({ t, o, h, l, c });
+  }
+  return data;
+}
+
+function runAnalysis() {
+  const data = collectInputs();
+  if (data.length < 3) { alert('Введи минимум 3 свечи для анализа'); return; }
+  candles = data;
+  runAnalysisWithData(data);
+}
+
+// ─── CORE ANALYSIS ENGINE ───
+function runAnalysisWithData(data) {
+  const log = [];
+  const addLog = (msg, type='') => log.push({ msg, type });
+
+  addLog(`▸ АНАЛИЗ [${currentTF}] — ${data.length} свечей`, 'head');
+
+  // 1. Find FVGs
+  const fvgs = [];
+  for (let i = 1; i < data.length - 1; i++) {
+    const prev = data[i-1], curr = data[i], next = data[i+1];
+    // Bullish FVG: prev.high < next.low
+    if (prev.h < next.l) {
+      fvgs.push({ type: 'bull', top: next.l, bot: prev.h, mid: (next.l + prev.h) / 2, idx: i, label: `BISI ${i+1}` });
+      addLog(`✓ Бычий FVG найден: ${prev.h.toFixed(5)}–${next.l.toFixed(5)} (свеча ${i+1})`, 'ok');
+    }
+    // Bearish FVG: prev.low > next.high
+    if (prev.l > next.h) {
+      fvgs.push({ type: 'bear', top: prev.l, bot: next.h, mid: (prev.l + next.h) / 2, idx: i, label: `SIBI ${i+1}` });
+      addLog(`✓ Медвежий FVG найден: ${next.h.toFixed(5)}–${prev.l.toFixed(5)} (свеча ${i+1})`, 'bear');
+    }
+  }
+  if (fvgs.length === 0) addLog('⚠ FVG не найдены', 'warn');
+
+  // 2. Equal Highs / Lows
+  const highs = data.map(d => d.h);
+  const lows = data.map(d => d.l);
+  const eqHighs = [], eqLows = [];
+  const threshold = 0.0003;
+
+  for (let i = 0; i < highs.length; i++) {
+    for (let j = i+1; j < highs.length; j++) {
+      if (Math.abs(highs[i] - highs[j]) <= threshold) {
+        const lvl = (highs[i] + highs[j]) / 2;
+        if (!eqHighs.find(e => Math.abs(e.level - lvl) < threshold)) {
+          eqHighs.push({ level: lvl, idx1: i, idx2: j });
+          addLog(`◈ Equal Highs: ~${lvl.toFixed(5)} (свечи ${i+1} и ${j+1}) — BSL`, 'warn');
+        }
+      }
+    }
+  }
+  for (let i = 0; i < lows.length; i++) {
+    for (let j = i+1; j < lows.length; j++) {
+      if (Math.abs(lows[i] - lows[j]) <= threshold) {
+        const lvl = (lows[i] + lows[j]) / 2;
+        if (!eqLows.find(e => Math.abs(e.level - lvl) < threshold)) {
+          eqLows.push({ level: lvl, idx1: i, idx2: j });
+          addLog(`◈ Equal Lows: ~${lvl.toFixed(5)} (свечи ${i+1} и ${j+1}) — SSL`, 'ok');
+        }
+      }
+    }
+  }
+
+  // 3. Swing Highs / Lows (last 20)
+  const last = data.slice(-Math.min(20, data.length));
+  const swingHigh = Math.max(...last.map(d => d.h));
+  const swingLow  = Math.min(...last.map(d => d.l));
+  const currPrice = data[data.length - 1].c;
+  addLog(`▸ Swing High (20): ${swingHigh.toFixed(5)}`, 'info');
+  addLog(`▸ Swing Low (20): ${swingLow.toFixed(5)}`, 'info');
+
+  // 4. Displacement detection
+  let displacement = null;
+  for (let i = data.length - 3; i < data.length; i++) {
+    if (i < 1) continue;
+    const body = Math.abs(data[i].c - data[i].o);
+    const range = data[i].h - data[i].l;
+    if (body / range > 0.65 && range > (swingHigh - swingLow) * 0.15) {
+      displacement = { dir: data[i].c > data[i].o ? 'bull' : 'bear', idx: i, candle: data[i] };
+      addLog(`⚡ Displacement обнаружен на свече ${i+1}: ${displacement.dir === 'bull' ? 'БЫЧИЙ' : 'МЕДВЕЖИЙ'}`, displacement.dir === 'bull' ? 'ok' : 'bear');
+    }
+  }
+
+  // 5. Bias determination
+  let bias = 'neutral', biasReason = '';
+  const recentBears = data.slice(-5).filter(d => d.c < d.o).length;
+  const recentBulls = data.slice(-5).filter(d => d.c > d.o).length;
+  const trend = (data[data.length-1].c - data[0].c) / data[0].c * 100;
+
+  if (trend < -0.5 && recentBears >= 3) {
+    bias = 'bear';
+    biasReason = `Нисходящий тренд ${trend.toFixed(2)}%, ${recentBears}/5 медвежьих свечей`;
+  } else if (trend > 0.5 && recentBulls >= 3) {
+    bias = 'bull';
+    biasReason = `Восходящий тренд +${trend.toFixed(2)}%, ${recentBulls}/5 бычьих свечей`;
+  } else {
+    biasReason = `Консолидация / нет чёткого Bias`;
+  }
+
+  // Override by displacement
+  if (displacement) {
+    bias = displacement.dir;
+    biasReason += ` + Displacement ${bias === 'bear' ? 'медвежий' : 'бычий'}`;
+  }
+
+  addLog(`▸ BIAS: ${bias.toUpperCase()} — ${biasReason}`, bias === 'bear' ? 'bear' : bias === 'bull' ? 'ok' : 'warn');
+
+  // 6. Draw on Liquidity
+  let dol = null;
+  if (bias === 'bear') {
+    dol = eqLows.length > 0 ? Math.min(...eqLows.map(e => e.level)) : swingLow;
+    addLog(`🎯 Draw on Liquidity (SSL): ${dol.toFixed(5)}`, 'ok');
+  } else if (bias === 'bull') {
+    dol = eqHighs.length > 0 ? Math.max(...eqHighs.map(e => e.level)) : swingHigh;
+    addLog(`🎯 Draw on Liquidity (BSL): ${dol.toFixed(5)}`, 'ok');
+  }
+
+  // 7. Setup
+  let setup = null;
+  const lastFVGBear = fvgs.filter(f => f.type === 'bear').slice(-1)[0];
+  const lastFVGBull = fvgs.filter(f => f.type === 'bull').slice(-1)[0];
+
+  if (bias === 'bear' && lastFVGBear) {
+    const entry = lastFVGBear.mid;
+    const sl = lastFVGBear.top + 0.00010;
+    const tp1 = dol || currPrice - (sl - entry) * 2;
+    const rr = Math.abs(entry - tp1) / Math.abs(sl - entry);
+    setup = { dir: 'bear', entry, sl, tp1, tp2: dol, rr, fvg: lastFVGBear };
+    addLog(`▶ SHORT сетап: Вход ${entry.toFixed(5)} | SL ${sl.toFixed(5)} | TP ${tp1.toFixed(5)} | R:R ${rr.toFixed(1)}`, 'bear');
+  } else if (bias === 'bull' && lastFVGBull) {
+    const entry = lastFVGBull.mid;
+    const sl = lastFVGBull.bot - 0.00010;
+    const tp1 = dol || currPrice + (entry - sl) * 2;
+    const rr = Math.abs(tp1 - entry) / Math.abs(entry - sl);
+    setup = { dir: 'bull', entry, sl, tp1, tp2: dol, rr, fvg: lastFVGBull };
+    addLog(`▶ LONG сетап: Вход ${entry.toFixed(5)} | SL ${sl.toFixed(5)} | TP ${tp1.toFixed(5)} | R:R ${rr.toFixed(1)}`, 'ok');
+  } else {
+    addLog('⚠ Чёткого сетапа нет. Ожидать Displacement.', 'warn');
+  }
+
+  addLog(`✓ Анализ завершён — ${new Date().toLocaleTimeString()}`, 'head');
+
+  // ─── RENDER ───
+  renderBias(bias, biasReason, currPrice, swingHigh, swingLow, trend);
+  renderChart(data, fvgs, eqHighs, eqLows, setup);
+  renderZones(fvgs, eqHighs, eqLows);
+  renderSetup(setup, bias, dol);
+  renderLog(log);
+
+  document.getElementById('results').classList.add('visible');
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('chartTitle').textContent = `EUR/USD · ${currentTF} · ${data.length} свечей`;
+}
+
+// ─── RENDER BIAS ───
+function renderBias(bias, reason, price, sh, sl, trend) {
+  const card = document.getElementById('biasCard');
+  card.className = `bias-card ${bias}`;
+  const arrow = bias === 'bear' ? '▼' : bias === 'bull' ? '▲' : '◆';
+  const label = bias === 'bear' ? 'МЕДВЕЖИЙ' : bias === 'bull' ? 'БЫЧИЙ' : 'НЕЙТРАЛЬНЫЙ';
+  card.innerHTML = `
+    <div class="bias-arrow">${arrow}</div>
+    <div class="bias-main">
+      <div class="bias-label">DAILY BIAS · ICT 2026</div>
+      <div class="bias-value">${label}</div>
+      <div class="bias-reason">${reason}</div>
+    </div>
+    <div class="bias-stats">
+      <div class="bstat">
+        <div class="bstat-val" style="color:${bias==='bear'?'var(--bear)':'var(--bull)'}">${price.toFixed(5)}</div>
+        <div class="bstat-label">ТЕКУЩАЯ</div>
+      </div>
+      <div class="bstat">
+        <div class="bstat-val" style="color:var(--bear)">${sh.toFixed(5)}</div>
+        <div class="bstat-label">SWING HIGH</div>
+      </div>
+      <div class="bstat">
+        <div class="bstat-val" style="color:var(--bull)">${sl.toFixed(5)}</div>
+        <div class="bstat-label">SWING LOW</div>
+      </div>
+      <div class="bstat">
+        <div class="bstat-val" style="color:${trend<0?'var(--bear)':'var(--bull)'}">${trend.toFixed(2)}%</div>
+        <div class="bstat-label">ТРЕНД</div>
+      </div>
+    </div>`;
+}
+
+// ─── RENDER CHART ───
+function renderChart(data, fvgs, eqH, eqL, setup) {
+  const canvas = document.getElementById('mainChart');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = 320 * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const W = canvas.offsetWidth, H = 320;
+  ctx.clearRect(0, 0, W, H);
+
+  const allH = data.map(d => d.h), allL = data.map(d => d.l);
+  const maxP = Math.max(...allH), minP = Math.min(...allL);
+  const pad = (maxP - minP) * 0.1;
+  const pTop = minP - pad, pRange = (maxP + pad) - pTop;
+  const toY = p => H - ((p - pTop) / pRange * H);
+
+  const n = data.length;
+  const cW = (W - 40) / n;
+  const toX = i => 40 + i * cW + cW / 2;
+
+  // Background
+  ctx.fillStyle = '#0e1018';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = '#1e2538'; ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 8; i++) {
+    const y = (H / 8) * i;
+    ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(W, y); ctx.stroke();
+    const price = maxP + pad - (pRange / 8 * i);
+    ctx.fillStyle = '#4a5380'; ctx.font = '9px JetBrains Mono';
+    ctx.fillText(price.toFixed(4), 0, y + 3);
+  }
+
+  // FVG zones
+  fvgs.forEach(f => {
+    const y1 = toY(f.top), y2 = toY(f.bot);
+    ctx.fillStyle = f.type === 'bull' ? 'rgba(0,230,118,0.08)' : 'rgba(255,23,68,0.08)';
+    ctx.fillRect(40, Math.min(y1,y2), W-40, Math.abs(y2-y1));
+    ctx.strokeStyle = f.type === 'bull' ? 'rgba(0,230,118,0.3)' : 'rgba(255,23,68,0.3)';
+    ctx.lineWidth = 0.5; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(40, toY(f.mid)); ctx.lineTo(W, toY(f.mid)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = f.type === 'bull' ? 'rgba(0,230,118,0.7)' : 'rgba(255,23,68,0.7)';
+    ctx.font = '9px JetBrains Mono';
+    ctx.fillText(f.label, W - 60, toY(f.mid) - 3);
+  });
+
+  // Equal Highs / Lows
+  eqH.forEach(e => {
+    ctx.strokeStyle = 'rgba(255,196,0,0.5)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(40, toY(e.level)); ctx.lineTo(W, toY(e.level)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,196,0,0.8)'; ctx.font = '9px JetBrains Mono';
+    ctx.fillText('EQH', W - 30, toY(e.level) - 3);
+  });
+  eqL.forEach(e => {
+    ctx.strokeStyle = 'rgba(41,121,255,0.5)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(40, toY(e.level)); ctx.lineTo(W, toY(e.level)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(41,121,255,0.8)'; ctx.font = '9px JetBrains Mono';
+    ctx.fillText('EQL', W - 30, toY(e.level) + 10);
+  });
+
+  // Setup levels
+  if (setup) {
+    const col = setup.dir === 'bear' ? 'rgba(255,23,68,' : 'rgba(0,230,118,';
+    [[setup.entry, col+'0.8)', 'ENTRY'],[setup.sl, 'rgba(255,196,0,0.8)', 'STOP'],[setup.tp1, col+'0.6)', 'TP1']].forEach(([p, c, lbl]) => {
+      ctx.strokeStyle = c; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(40, toY(p)); ctx.lineTo(W, toY(p)); ctx.stroke();
+      ctx.fillStyle = c; ctx.font = 'bold 9px JetBrains Mono';
+      ctx.fillText(lbl + ' ' + p.toFixed(5), 42, toY(p) - 4);
+    });
+  }
+
+  // Candles
+  data.forEach((d, i) => {
+    const x = toX(i);
+    const bull = d.c >= d.o;
+    const bodyTop = toY(Math.max(d.o, d.c));
+    const bodyBot = toY(Math.min(d.o, d.c));
+    const bodyH = Math.max(bodyBot - bodyTop, 1);
+    ctx.fillStyle = bull ? '#00e676' : '#ff1744';
+    ctx.fillRect(x - cW * 0.3, bodyTop, cW * 0.6, bodyH);
+    ctx.strokeStyle = bull ? '#00e676' : '#ff1744';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, toY(d.h)); ctx.lineTo(x, bodyTop);
+    ctx.moveTo(x, bodyBot); ctx.lineTo(x, toY(d.l));
+    ctx.stroke();
+
+    // Date label
+    if (d.t && i % Math.max(1, Math.floor(n/8)) === 0) {
+      ctx.fillStyle = '#4a5380'; ctx.font = '8px JetBrains Mono';
+      ctx.fillText(d.t, x - 10, H - 4);
+    }
+  });
+}
+
+// ─── RENDER ZONES ───
+function renderZones(fvgs, eqH, eqL) {
+  const fvgEl = document.getElementById('fvgZones');
+  fvgEl.innerHTML = fvgs.length === 0 ? '<div class="zone-item"><span class="zone-item-label">FVG не найдены</span></div>' :
+    fvgs.map(f => `
+      <div class="zone-item">
+        <span class="zone-item-label">${f.label} <span class="badge ${f.type==='bull'?'badge-bull':'badge-bear'}">${f.type.toUpperCase()}</span></span>
+        <span class="zone-item-val ${f.type}">${f.bot.toFixed(5)} – ${f.top.toFixed(5)}<br><small style="color:var(--muted2)">CE: ${f.mid.toFixed(5)}</small></span>
+      </div>`).join('');
+
+  const liqEl = document.getElementById('liqZones');
+  const all = [
+    ...eqH.map(e => ({ label: 'Equal Highs (BSL)', level: e.level, type: 'bear' })),
+    ...eqL.map(e => ({ label: 'Equal Lows (SSL)', level: e.level, type: 'bull' }))
+  ];
+  liqEl.innerHTML = all.length === 0 ? '<div class="zone-item"><span class="zone-item-label">Явных пулов нет</span></div>' :
+    all.map(z => `
+      <div class="zone-item">
+        <span class="zone-item-label">${z.label}</span>
+        <span class="zone-item-val ${z.type}">${z.level.toFixed(5)}</span>
+      </div>`).join('');
+}
+
+// ─── RENDER SETUP ───
+function renderSetup(setup, bias, dol) {
+  const el = document.getElementById('setupCard');
+  if (!setup) {
+    el.innerHTML = `
+      <div class="setup-top none"><div class="setup-dir" style="color:var(--warn)">⏳ ОЖИДАНИЕ</div><div style="font-size:13px;color:var(--muted2);margin-left:12px;">Нет чёткого сетапа. Дождаться Displacement в Kill Zone.</div></div>
+      <div class="setup-body">
+        <div class="setup-row"><span class="setup-key">Действие</span><span class="setup-val">Наблюдать за рынком. Не торговать без Displacement.</span></div>
+        <div class="setup-row"><span class="setup-key">Следить за</span><span class="setup-val">Kill Zone 09:30–10:30 EST + появление FVG после импульса</span></div>
+      </div>`;
+    return;
+  }
+  const dir = setup.dir === 'bear' ? 'SHORT ▼' : 'LONG ▲';
+  const rr = setup.rr.toFixed(1);
+  el.innerHTML = `
+    <div class="setup-top ${setup.dir}">
+      <div class="setup-dir ${setup.dir}">${dir}</div>
+      <span class="badge ${setup.dir==='bear'?'badge-bear':'badge-bull'}" style="margin-left:8px;">R:R ${rr}:1</span>
+      <span style="font-size:12px;color:var(--muted2);margin-left:12px;">ICT 2026 Cookie Cutter Setup</span>
+    </div>
+    <div class="setup-body">
+      <div class="setup-row"><span class="setup-key">Зона входа</span><span class="setup-val" style="color:var(--text);font-weight:700;">${setup.entry.toFixed(5)} <small style="color:var(--muted2)">(CE FVG)</small></span></div>
+      <div class="setup-row"><span class="setup-key">Стоп-лосс</span><span class="setup-val" style="color:var(--warn);">${setup.sl.toFixed(5)} <small style="color:var(--muted2)">(1 тик за свечу №1 FVG)</small></span></div>
+      <div class="setup-row"><span class="setup-key">Цель 1 (Partial)</span><span class="setup-val" style="color:var(--bull);">${setup.tp1.toFixed(5)}</span></div>
+      <div class="setup-row"><span class="setup-key">Цель 2 (Full)</span><span class="setup-val" style="color:var(--bull);">${dol ? dol.toFixed(5) : 'Draw on Liquidity'}</span></div>
+      <div class="setup-row"><span class="setup-key">Risk:Reward</span><span class="setup-val" style="color:var(--accent);">${rr}:1</span></div>
+      <div class="setup-row"><span class="setup-key">FVG источник</span><span class="setup-val">${setup.fvg.label} · ${setup.fvg.bot.toFixed(5)}–${setup.fvg.top.toFixed(5)}</span></div>
+      <div class="setup-row"><span class="setup-key">⚠ Условие</span><span class="setup-val" style="color:var(--warn);">Входить только в Kill Zone. Тела свечей не должны закрываться за SL.</span></div>
+    </div>`;
+}
+
+// ─── RENDER LOG ───
+function renderLog(log) {
+  const el = document.getElementById('analysisLog');
+  el.innerHTML = log.map(l => `<div class="log-line ${l.type}">> ${l.msg}</div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+// ─── CLEAR ───
+function clearAll() {
+  buildCandleInputs();
+  document.getElementById('results').classList.remove('visible');
+}
+
+// Resize chart on window resize
+window.addEventListener('resize', () => {
+  if (candles.length > 0) renderChart(candles, [], [], [], null);
+});
+</script>
+</body>
+</html>
