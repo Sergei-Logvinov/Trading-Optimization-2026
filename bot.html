@@ -366,10 +366,9 @@ body::after {
 .leg-dot { width: 8px; height: 8px; border-radius: 2px; }
 
 canvas#mainChart {
-  width: 100%;
-  height: 320px;
   display: block;
   border-radius: 8px;
+  max-width: 100%;
 }
 
 /* ── ZONES TABLE ── */
@@ -958,7 +957,6 @@ function runAnalysisWithData(data) {
 
   // ─── RENDER ───
   renderBias(bias, biasReason, currPrice, swingHigh, swingLow, trend);
-  renderChart(data, fvgs, eqHighs, eqLows, setup);
   renderZones(fvgs, eqHighs, eqLows);
   renderSetup(setup, bias, dol);
   renderLog(log);
@@ -966,6 +964,9 @@ function runAnalysisWithData(data) {
   document.getElementById('results').classList.add('visible');
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.getElementById('chartTitle').textContent = `EUR/USD · ${currentTF} · ${data.length} свечей`;
+
+  // Рендер графика после того как DOM стал видимым
+  setTimeout(() => renderChart(data, fvgs, eqHighs, eqLows, setup), 50);
 }
 
 // ─── RENDER BIAS ───
@@ -1005,10 +1006,14 @@ function renderBias(bias, reason, price, sh, sl, trend) {
 function renderChart(data, fvgs, eqH, eqL, setup) {
   const canvas = document.getElementById('mainChart');
   const ctx = canvas.getContext('2d');
-  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-  canvas.height = 320 * window.devicePixelRatio;
-  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  const W = canvas.offsetWidth, H = 320;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth - 32 || 800;
+  const H = 320;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, W, H);
 
   const allH = data.map(d => d.h), allL = data.map(d => d.l);
@@ -1169,7 +1174,10 @@ function clearAll() {
 
 // Resize chart on window resize
 window.addEventListener('resize', () => {
-  if (candles.length > 0) renderChart(candles, [], [], [], null);
+  if (candles.length > 0) {
+    const fvgs = []; const eqH = []; const eqL = [];
+    renderChart(candles, fvgs, eqH, eqL, null);
+  }
 });
 </script>
 </body>
