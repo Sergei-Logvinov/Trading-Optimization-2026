@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICT 2026 — Стратегия</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0b0f;
+    --panel: #111318;
+    --border: #1e2230;
+    --accent: #00e5ff;
+    --accent2: #ff4d6d;
+    --accent3: #b8ff57;
+    --text: #e0e6f0;
+    --muted: #5a6280;
+    --bull: #b8ff57;
+    --bear: #ff4d6d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid noise texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .logo-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  h1 {
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Nav tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    animation: fadeDown 0.6s 0.1s ease both;
+  }
+
+  .tab {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .tab:hover { color: var(--text); background: var(--border); }
+  .tab.active { background: var(--accent); color: #000; }
+
+  /* Content sections */
+  .section { display: none; animation: fadeIn 0.3s ease; }
+  .section.active { display: block; }
+
+  @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: none; } }
+  @keyframes fadeDown { from { opacity:0; transform: translateY(-12px); } to { opacity:1; transform: none; } }
+
+  /* Cards */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+
+  .card-title {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .card p, .card li {
+    font-size: 14px;
+    color: #8a9bb8;
+    line-height: 1.7;
+  }
+
+  .card ul { padding-left: 18px; }
+  .card li { margin-bottom: 6px; }
+
+  /* Two column grid */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } .tab { min-width: 80px; font-size: 11px; } }
+
+  /* Sessions timeline */
+  .timeline { position: relative; padding-left: 20px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px; top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent), var(--accent2), var(--accent3));
+    border-radius: 2px;
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+    padding-left: 16px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -18px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+  }
+
+  .timeline-item.london::before { background: var(--accent2); }
+  .timeline-item.ny::before { background: var(--accent3); }
+  .timeline-item.pre::before { background: #a78bfa; }
+
+  .time-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .timeline-item.london .time-tag { color: var(--accent2); }
+  .timeline-item.ny .time-tag { color: var(--accent3); }
+  .timeline-item.pre .time-tag { color: #a78bfa; }
+
+  .time-label { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .time-desc { font-size: 13px; color: var(--muted); }
+
+  /* Checklist */
+  .checklist { list-style: none; padding: 0; }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    color: #8a9bb8;
+  }
+  .checklist li:last-child { border-bottom: none; }
+
+  .check-box {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .check-box.checked {
+    background: var(--accent3);
+    border-color: var(--accent3);
+  }
+  .check-box.checked::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #000;
+    font-weight: 700;
+  }
+
+  .checklist li.done { color: var(--muted); text-decoration: line-through; }
+
+  /* Step badge */
+  .step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #000;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    margin-right: 6px;
+    margin-bottom: 6px;
+  }
+  .tag.bull { background: rgba(184,255,87,0.12); color: var(--bull); border: 1px solid rgba(184,255,87,0.3); }
+  .tag.bear { background: rgba(255,77,109,0.12); color: var(--bear); border: 1px solid rgba(255,77,109,0.3); }
+  .tag.info { background: rgba(0,229,255,0.10); color: var(--accent); border: 1px solid rgba(0,229,255,0.25); }
+
+  /* Key metric boxes */
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+
+  .metric {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .metric-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .metric-label { font-size: 11px; color: var(--muted); }
+
+  /* Bias toggle */
+  .bias-switch {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .bias-btn {
+    flex: 1;
+    padding: 14px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .bias-btn.bull-active { background: rgba(184,255,87,0.15); color: var(--bull); }
+  .bias-btn.bear-active { background: rgba(255,77,109,0.15); color: var(--bear); }
+
+  .setup-content { display: none; }
+  .setup-content.visible { display: block; animation: fadeIn 0.3s ease; }
+
+  /* Progress bar */
+  .progress-bar {
+    background: var(--border);
+    border-radius: 100px;
+    height: 6px;
+    margin-top: 16px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent3), var(--accent));
+    border-radius: 100px;
+    transition: width 0.3s ease;
+  }
+  .progress-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    text-align: right;
+  }
+
+  /* Risk calc */
+  .calc-row { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .calc-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    width: 160px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .calc-input:focus { border-color: var(--accent); }
+  .calc-label { font-size: 13px; color: var(--muted); width: 130px; }
+  .calc-result {
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 16px;
+    font-family: 'Space Mono', monospace;
+  }
+  .calc-result-val { font-size: 24px; color: var(--accent); font-weight: 700; }
+  .calc-result-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+  }
+
+  .highlight { color: var(--accent); font-weight: 700; }
+  .highlight-bull { color: var(--bull); font-weight: 700; }
+  .highlight-bear { color: var(--bear); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <span class="logo-tag">▸ Smart Money Concept</span>
+    <h1>ICT <span>2026</span></h1>
+    <p class="subtitle">Интерактивный справочник стратегии</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showSection('overview')">📊 Обзор</button>
+    <button class="tab" onclick="showSection('sessions')">🕐 Сессии</button>
+    <button class="tab" onclick="showSection('checklist')">✅ Чеклист</button>
+    <button class="tab" onclick="showSection('setups')">📈 Сетапы</button>
+    <button class="tab" onclick="showSection('risk')">🛡 Риск</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="section active" id="overview">
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="metric-value">70%</div>
+        <div class="metric-label">RTH гэп до CE к 10:00</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">20</div>
+        <div class="metric-label">дней Lookback</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">1%</div>
+        <div class="metric-label">Макс. риск на сделку</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">50%</div>
+        <div class="metric-label">CE — ключевой уровень</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Главный принцип</div>
+      <h3>Время важнее цены</h3>
+      <p>Алгоритм доставляет цену к заранее известным уровням ликвидности в конкретные временные окна. Задача трейдера — предвидеть движение, а не реагировать на него.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Ликвидность</div>
+        <h3>Smooth vs Jagged</h3>
+        <ul>
+          <li><span class="highlight">Гладкие</span> уровни — цель алгоритма (стопы ритейла)</li>
+          <li><span class="highlight-bear">Рваные</span> уровни — ликвидность снята, интерес пропал</li>
+          <li>Относительно равные Highs/Lows = инженерная ликвидность</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Suspension Block</div>
+        <h3>Блок приостановки</h3>
+        <ul>
+          <li>BPR + Volume Imbalance сверху <em>и</em> снизу</li>
+          <li>Ниже CE = медвежий контекст</li>
+          <li>Закрепление тел выше CE = инверсия в бычий</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Инструменты PD Arrays</div>
+      <div style="margin-top:8px;">
+        <span class="tag info">FVG / BISI / SIBI</span>
+        <span class="tag info">Inversion FVG</span>
+        <span class="tag info">Suspension Block</span>
+        <span class="tag info">Volume Imbalance</span>
+        <span class="tag info">Order Block</span>
+        <span class="tag info">Breaker</span>
+        <span class="tag info">NWOG / NDOG / RTH Gap</span>
+        <span class="tag info">SMT Divergence</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Грейдирование (Wick Grading)</div>
+      <h3>Квадранты и восьмые части</h3>
+      <p>Фитили и гэпы делятся на уровни: <span class="highlight">0.25 · 0.50 (CE) · 0.75</span> — квадранты; <span class="highlight">0.125 · 0.375 · 0.625 · 0.875</span> — восьмые («атомная» точность разворота). Тела свечей не должны закрываться за CE — иначе Bias меняется.</p>
+    </div>
+  </div>
+
+  <!-- SESSIONS -->
+  <div class="section" id="sessions">
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Важно</div>
+      <p>Все время в часовом поясе <span class="highlight">New York (EST/EDT)</span>. Кил-зона ≠ сессия. Сессия — широкое окно; Кил-зона — «сладкое пятно» внутри него.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="time-tag">19:00 – 21:00 EST</div>
+        <div class="time-label">🌏 Азиатская Кил-зона</div>
+        <div class="time-desc">Скальпинг, первый FVG. Формируются «гладкие» High/Low — цели для NY. Сессия продолжается до 05:00.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="time-tag">⚠ 05:00 – 07:00 EST</div>
+        <div class="time-label">💤 Мёртвое время</div>
+        <div class="time-desc">Цена «вязкая», торговля не рекомендована. Ждать 07:00.</div>
+      </div>
+      <div class="timeline-item london">
+        <div class="time-tag">02:00 – 05:00 EST</div>
+        <div class="time-label">🇬🇧 London Open Kill Zone</div>
+        <div class="time-desc">Лучшее окно: 02:00–04:00. Часто формируется Maximum или Minimum дня. Фиксировать прибыль к 10:00–11:00 EST.</div>
+      </div>
+      <div class="timeline-item pre">
+        <div class="time-tag">07:00 – 09:30 EST</div>
+        <div class="time-label">⚡ Пре-маркет NY</div>
+        <div class="time-desc">Алгоритм ищет ликвидность. Часто формируется <strong>Judas Swing</strong> — ложное движение против истинного Bias. Можно завершить торговлю до 09:30.</div>
+      </div>
+      <div class="timeline-item ny">
+        <div class="time-tag">08:30 EST</div>
+        <div class="time-label">📰 Новости (CPI/PPI)</div>
+        <div class="time-desc">«Инъекция волатильности». Face Rippers — 100+ пунктов за минуту. Новичкам: вне рынка обязательно!</div>
+      </div>
+      <div class="timeline-item ny">
+        <div class="time-tag">09:30 – 10:00 EST</div>
+        <div class="time-label">🔔 Opening Bell</div>
+        <div class="time-desc">70% вероятность теста CE гэпа RTH к 10:00. Смотреть за Judas Swing и первым FVG после смещения.</div>
+      </div>
+      <div class="timeline-item ny">
+        <div class="time-tag">09:30 – 10:30 EST</div>
+        <div class="time-label">📐 Opening Range</div>
+        <div class="time-desc">Фиксировать High и Low. Разделить на квадранты. Все ключевые PD Arrays формируются вблизи этих уровней.</div>
+      </div>
+      <div class="timeline-item london">
+        <div class="time-tag">10:00 – 11:00 EST</div>
+        <div class="time-label">🏁 London Close</div>
+        <div class="time-desc">Фиксация прибыли лондонскими трейдерами. Часто разворот или High/Low дня.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div class="section" id="checklist">
+    <div class="card" style="margin-bottom:8px;">
+      <div class="card-title">Cookie Cutter Setup — Пошаговый чеклист</div>
+      <p style="font-size:13px;color:var(--muted);">Нажмите на пункт, чтобы отметить выполненным. Прогресс обновляется автоматически.</p>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-label" id="progressLabel">0 / 12 выполнено</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Шаг 1 — Определение Bias (Дневной график)</div>
+      <ul class="checklist" id="cl">
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Найти ближайший Draw on Liquidity: старый Max/Min или незакрытый FVG/гэп</span></li>
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Определить положение цены относительно Suspension Block (выше или ниже CE 50%)</span></li>
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Проверить «гладкость» уровней за последние 20 торговых дней</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Шаг 2 — Разметка уровней (07:00–09:00 EST)</div>
+      <ul class="checklist">
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Отметить High и Low Азиатской и Лондонской сессий</span></li>
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Нанести RTH Gap (закрытие 16:15 → открытие 09:30)</span></li>
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Разделить RTH Gap на квадранты: 25% · 50% (CE) · 75%</span></li>
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Проверить NWOG / NDOG на наличие незакрытых уровней</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Шаг 3 — Поиск сигнала (09:30–10:00 EST)</div>
+      <ul class="checklist">
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Наблюдать Judas Swing: ложное движение против Bias для снятия стопов</span></li>
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Дождаться Displacement: резкое смещение, создающее FVG в нужную сторону</span></li>
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Проверить SMT Divergence: один индекс обновляет экстремум, другой — нет</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Шаг 4 — Вход и управление</div>
+      <ul class="checklist">
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Войти в первый сформированный FVG (или Inversion FVG) после смещения</span></li>
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Стоп: 1 тик за пределы свечи №1, формирующей FVG</span></li>
+        <li><div class="check-box" onclick="toggle(this)"></div><span>Тейк: частичная фиксация на CE гэпа или ближайшей ликвидности. Подтягивать стоп!</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SETUPS -->
+  <div class="section" id="setups">
+    <div class="bias-switch">
+      <button class="bias-btn bull-active" id="bullBtn" onclick="showBias('bull')">▲ LONG (Покупка)</button>
+      <button class="bias-btn" id="bearBtn" onclick="showBias('bear')">▼ SHORT (Продажа)</button>
+    </div>
+
+    <div class="setup-content visible" id="bull-setup">
+      <div class="card">
+        <span class="tag bull">БЫЧИЙ</span>
+        <h3>Сетап на покупку</h3>
+        <ul style="margin-top:12px;">
+          <li style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;color:#8a9bb8;list-style:none;">
+            <span class="step-badge" style="background:var(--bull);min-width:22px;">1</span>
+            <span><strong style="color:var(--text);">Bias:</strong> Дневной график бычий. Цель — незакрытый FVG или старые максимумы выше текущей цены</span>
+          </li>
+          <li style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;color:#8a9bb8;list-style:none;">
+            <span class="step-badge" style="background:var(--bull);min-width:22px;">2</span>
+            <span><strong style="color:var(--text);">Время:</strong> 09:30 AM EST — открытие. Смотреть на дисконт-гэп открытия</span>
+          </li>
+          <li style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;color:#8a9bb8;list-style:none;">
+            <span class="step-badge" style="background:var(--bull);min-width:22px;">3</span>
+            <span><strong style="color:var(--text);">Действие:</strong> Цена падает в дисконт или тестирует CE длинного HTF-фитиля</span>
+          </li>
+          <li style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;color:#8a9bb8;list-style:none;">
+            <span class="step-badge" style="background:var(--bull);min-width:22px;">4</span>
+            <span><strong style="color:var(--text);">Подтверждение:</strong> Цена уважает нижнюю границу Suspension Block или Inversion FVG. Тела свечей не закрываются ниже</span>
+          </li>
+          <li style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;color:#8a9bb8;list-style:none;">
+            <span class="step-badge" style="background:var(--bull);min-width:22px;">5</span>
+            <span><strong style="color:var(--text);">Вход:</strong> Импульс вверх → FVG на 1-минутном или 15-секундном графике. Войти при ретесте FVG</span>
+          </li>
+          <li style="display:flex;gap:10px;padding:10px 0;font-size:14px;color:#8a9bb8;list-style:none;">
+            <span class="step-badge" style="background:var(--bull);min-width:22px;">6</span>
+            <span><strong style="color:var(--text);">Цель:</strong> Max Азиатской сессии или полное закрытие RTH-гэпа открытия</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="setup-content" id="bear-setup">
+      <div class="card">
+        <span class="tag bear">МЕДВЕЖИЙ</span>
+        <h3>Сетап на продажу</h3>
+        <ul style="margin-top:12px;">
+          <li style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;color:#8a9bb8;list-style:none;">
+            <span class="step-badge" style="background:var(--bear);min-width:22px;">1</span>
+            <span><strong style="color:var(--text);">Bias:</strong> Цена ниже CE медвежьего Suspension Block. Тела свечей не могут закрепиться выше 50%</span>
+          </li>
+          <li style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;color:#8a9bb8;list-style:none;">
+            <span class="step-badge" style="background:var(--bear);min-width:22px;">2</span>
+            <span><strong style="color:var(--text);">Время:</strong> 09:30 AM EST. Ждать резкого рывка вверх (Judas Swing)</span>
+          </li>
+          <li style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;color:#8a9bb8;list-style:none;">
+            <span class="step-badge" style="background:var(--bear);min-width:22px;">3</span>
+            <span><strong style="color:var(--text);">Действие:</strong> Цена снимает максимумы пре-маркета или Азиатской сессии (Judas Swing)</span>
+          </li>
+          <li style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;color:#8a9bb8;list-style:none;">
+            <span class="step-badge" style="background:var(--bear);min-width:22px;">4</span>
+            <span><strong style="color:var(--text);">Подтверждение:</strong> SMT — NQ делает новый Max, ES — нет. Пробитие краткосрочного Min (MSSS)</span>
+          </li>
+          <li style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;color:#8a9bb8;list-style:none;">
+            <span class="step-badge" style="background:var(--bear);min-width:22px;">5</span>
+            <span><strong style="color:var(--text);">Вход:</strong> Возврат в медвежий FVG (Модель 2022). Стоп: 1 тик выше свечи №1 FVG</span>
+          </li>
+          <li style="display:flex;gap:10px;padding:10px 0;font-size:14px;color:#8a9bb8;list-style:none;">
+            <span class="step-badge" style="background:var(--bear);min-width:22px;">6</span>
+            <span><strong style="color:var(--text);">Цель:</strong> CE гэпа RTH или «гладкие» минимумы ниже. Частичная фиксация на 50%</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:0;">
+      <div class="card-title">SMT Divergence</div>
+      <p>Сравнивать <strong>NQ (NASDAQ)</strong> и <strong>ES (S&P 500)</strong>. Если один обновляет экстремум, а другой нет — подтверждение истинного движения «умных денег».</p>
+    </div>
+  </div>
+
+  <!-- RISK -->
+  <div class="section" id="risk">
+    <div class="card">
+      <div class="card-title">Калькулятор риска</div>
+      <div class="calc-row">
+        <span class="calc-label">Депозит ($)</span>
+        <input class="calc-input" type="number" id="deposit" value="10000" oninput="calcRisk()">
+      </div>
+      <div class="calc-row">
+        <span class="calc-label">Риск % (макс 1%)</span>
+        <input class="calc-input" type="number" id="riskPct" value="0.5" step="0.25" min="0.25" max="1" oninput="calcRisk()">
+      </div>
+      <div class="calc-result" id="calcResult">
+        <div class="calc-result-val" id="riskAmount">$50</div>
+        <div class="calc-result-label">Максимальный риск на сделку</div>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted);">Добавить 1 микро-контракт при +<span id="addAt">$2,500</span> прибыли</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Правило стоп-лосса</div>
+        <ul>
+          <li>Стоп: <span class="highlight">1 тик</span> за пределы свечи №1 FVG</li>
+          <li>Не давать стопу «застаиваться»</li>
+          <li>Подтягивать за каждый новый экстремум</li>
+          <li>После первой фиксации — стоп в безубыток</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Масштабирование</div>
+        <ul>
+          <li>Начинать с <span class="highlight">1 микро-контракта</span></li>
+          <li>+1 микро на каждые +$2,500 прибыли</li>
+          <li>-1 микро при убытке -$2,500</li>
+          <li>Риск 0.25–0.5% первые 2 года</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Психология — тест перед входом</div>
+      <h3 style="margin-bottom:12px;">Задай себе вопрос:</h3>
+      <p style="font-size:16px;color:var(--accent);font-style:italic;margin-bottom:12px;">«Если я получу стоп-лосс — смогу ли я комфортно открыть следующую сделку?»</p>
+      <p>Если ответ «нет» — объём завышен. Если напряжение в груди — уменьши лот.</p>
+      <div class="divider"></div>
+      <div class="card-title">Не торгуй когда</div>
+      <ul>
+        <li>Нет чёткого Bias на дневном графике</li>
+        <li>Выходят CPI / PPI / FOMC (новичкам)</li>
+        <li>«Мёртвое время» 05:00–07:00 EST</li>
+        <li>Рынок «грязный»: январь, геополитика</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function showSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function toggle(box) {
+    box.classList.toggle('checked');
+    const li = box.closest('li');
+    li.classList.toggle('done');
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const all = document.querySelectorAll('.check-box');
+    const done = document.querySelectorAll('.check-box.checked');
+    const pct = Math.round((done.length / all.length) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = `${done.length} / ${all.length} выполнено`;
+  }
+
+  function showBias(type) {
+    document.querySelectorAll('.setup-content').forEach(s => s.classList.remove('visible'));
+    document.getElementById(type + '-setup').classList.add('visible');
+    document.getElementById('bullBtn').className = 'bias-btn' + (type==='bull'?' bull-active':'');
+    document.getElementById('bearBtn').className = 'bias-btn' + (type==='bear'?' bear-active':'');
+  }
+
+  function calcRisk() {
+    const dep = parseFloat(document.getElementById('deposit').value) || 0;
+    const pct = parseFloat(document.getElementById('riskPct').value) || 0.5;
+    const risk = (dep * pct / 100).toFixed(0);
+    document.getElementById('riskAmount').textContent = '$' + Number(risk).toLocaleString();
+    document.getElementById('addAt').textContent = '$2,500';
+  }
+  calcRisk();
+</script>
+</body>
+</html>
