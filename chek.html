@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICT 2026 · Trade Checklist</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #080a0f;
+  --s1: #0e1118;
+  --s2: #141820;
+  --border: #1d2535;
+  --bull: #00ff87;
+  --bear: #ff2d55;
+  --neutral: #5b6aff;
+  --text: #dde3f0;
+  --muted: #3d4f6e;
+  --muted2: #6b82a8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  min-height: 100vh;
+  padding: 32px 16px 80px;
+}
+
+/* noise overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+.wrap { max-width: 860px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* HEADER */
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.title-block h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(42px, 8vw, 72px);
+  letter-spacing: 2px;
+  line-height: 1;
+  color: #fff;
+}
+
+.title-block h1 span { color: var(--neutral); }
+
+.title-sub {
+  font-size: 11px;
+  color: var(--muted2);
+  letter-spacing: 4px;
+  margin-top: 6px;
+}
+
+.reset-btn {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  color: var(--muted2);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+.reset-btn:hover { color: var(--text); border-color: var(--muted2); }
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.tab {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 10px 10px 0 0;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-buy {
+  background: var(--s2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-bottom: none;
+}
+.tab-buy.active {
+  background: rgba(0,255,135,0.08);
+  color: var(--bull);
+  border-color: rgba(0,255,135,0.3);
+}
+
+.tab-sell {
+  background: var(--s2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-bottom: none;
+}
+.tab-sell.active {
+  background: rgba(255,45,85,0.08);
+  color: var(--bear);
+  border-color: rgba(255,45,85,0.3);
+}
+
+/* PANEL */
+.panel {
+  display: none;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 0 0 14px 14px;
+  overflow: hidden;
+}
+.panel.active { display: block; }
+
+/* PHASE */
+.phase {
+  border-bottom: 1px solid var(--border);
+}
+.phase:last-child { border-bottom: none; }
+
+.phase-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 24px;
+  background: var(--s2);
+  border-bottom: 1px solid var(--border);
+}
+
+.phase-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  color: var(--muted);
+  line-height: 1;
+  min-width: 28px;
+}
+
+.phase-info { flex: 1; }
+
+.phase-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.phase-tf {
+  font-size: 10px;
+  color: var(--muted2);
+  letter-spacing: 3px;
+  margin-top: 3px;
+}
+
+.phase-progress {
+  font-size: 11px;
+  color: var(--muted2);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* ITEMS */
+.items { padding: 8px 0; }
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 13px 24px;
+  border-bottom: 1px solid rgba(29,37,53,0.5);
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+.item:last-child { border-bottom: none; }
+.item:hover { background: rgba(255,255,255,0.02); }
+
+.item.checked { opacity: 0.5; }
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 2px solid var(--muted);
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  font-size: 12px;
+}
+
+.item.checked .checkbox {
+  border-color: var(--bull);
+  background: rgba(0,255,135,0.15);
+  color: var(--bull);
+}
+
+.tab-sell ~ .panel .item.checked .checkbox {
+  border-color: var(--bear);
+  background: rgba(255,45,85,0.12);
+  color: var(--bear);
+}
+
+.item-content { flex: 1; }
+
+.item-text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.item.checked .item-text { text-decoration: line-through; color: var(--muted2); }
+
+.item-note {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 3px;
+  letter-spacing: 0.5px;
+}
+
+/* BLOCKER */
+.blocker {
+  background: rgba(255,45,85,0.05);
+  border: 1px solid rgba(255,45,85,0.2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 8px 24px;
+  font-size: 12px;
+  color: #ff6b84;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* SCORE BAR */
+.scorebar {
+  padding: 20px 24px;
+  background: var(--s2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.score-label { font-size: 11px; color: var(--muted2); letter-spacing: 2px; white-space: nowrap; }
+
+.bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 100px;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.bar-buy { background: linear-gradient(90deg, #004d2e, var(--bull)); }
+.bar-sell { background: linear-gradient(90deg, #4d0018, var(--bear)); }
+
+.score-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  min-width: 60px;
+  text-align: right;
+}
+
+.verdict {
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.verdict-no  { background: rgba(255,45,85,0.12); color: var(--bear); border: 1px solid rgba(255,45,85,0.25); }
+.verdict-ok  { background: rgba(255,196,0,0.1);  color: #ffc400;     border: 1px solid rgba(255,196,0,0.25); }
+.verdict-go  { background: rgba(0,255,135,0.1);  color: var(--bull); border: 1px solid rgba(0,255,135,0.25); }
+
+/* RULE CARD */
+.rules {
+  margin-top: 24px;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.rules-header {
+  padding: 14px 20px;
+  background: var(--s2);
+  border-bottom: 1px solid var(--border);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: var(--muted2);
+}
+
+.rules-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+@media (max-width: 560px) { .rules-grid { grid-template-columns: 1fr; } }
+
+.rule-item {
+  padding: 14px 20px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted2);
+  line-height: 1.6;
+  display: flex;
+  gap: 10px;
+}
+.rule-item:nth-child(even) { border-right: none; }
+.rule-icon { font-size: 16px; flex-shrink: 0; }
+
+.disclaimer {
+  margin-top: 24px;
+  font-size: 10px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.8;
+  padding: 0 16px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="title-block">
+      <h1>TRADE <span>CHECKLIST</span></h1>
+      <div class="title-sub">ICT 2026 · SMART MONEY · EUR/USD</div>
+    </div>
+    <button class="reset-btn" onclick="resetAll()">↺ СБРОСИТЬ</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab tab-buy active" onclick="switchTab('buy')">▲ ПОКУПКА (LONG)</button>
+    <button class="tab tab-sell" onclick="switchTab('sell')">▼ ПРОДАЖА (SHORT)</button>
+  </div>
+
+  <!-- BUY PANEL -->
+  <div class="panel active" id="panel-buy">
+
+    <!-- PHASE 1 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-num">1</div>
+        <div class="phase-info">
+          <div class="phase-title" style="color:var(--bull)">КОНТЕКСТ — СТАРШИЙ ТФ</div>
+          <div class="phase-tf">ТАЙМФРЕЙМ: 1W → 1D</div>
+        </div>
+        <div class="phase-progress" id="buy-p1-prog">0/3</div>
+      </div>
+      <div class="items" id="buy-p1">
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">На 1D цена находится в зоне ДИСКОНТА (ниже 50% диапазона последних 20 дней)</div>
+            <div class="item-note">Discount = покупаем дёшево. Premium = не покупаем.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Есть чёткий SSL (Equal Lows / Swing Low) который был СНЯТ или цена к нему движется</div>
+            <div class="item-note">Алгоритм идёт за ликвидностью вниз → разворот вверх.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Draw on Liquidity ВВЕРХУ — незакрытый FVG или BSL выше текущей цены</div>
+            <div class="item-note">Цели должны быть выше. Если целей нет — не покупаем.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-num">2</div>
+        <div class="phase-info">
+          <div class="phase-title" style="color:var(--bull)">СЛОМ СТРУКТУРЫ</div>
+          <div class="phase-tf">ТАЙМФРЕЙМ: 1H → 4H</div>
+        </div>
+        <div class="phase-progress" id="buy-p2-prog">0/3</div>
+      </div>
+      <div class="items" id="buy-p2">
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">CHoCH вверх зафиксирован на 1H — цена пробила предыдущий Lower High телом свечи</div>
+            <div class="item-note">Только тело! Вик не считается.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">После CHoCH был бычий Displacement — резкая импульсная свеча вверх с FVG</div>
+            <div class="item-note">Displacement = подтверждение что алгоритм активен в этом направлении.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">MSS подтверждён — цена не вернулась за SSL который был снят</div>
+            <div class="item-note">Если цена вернулась ниже SSL — сетап отменяется.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-num">3</div>
+        <div class="phase-info">
+          <div class="phase-title" style="color:var(--bull)">ВРЕМЯ И СЕССИЯ</div>
+          <div class="phase-tf">ТАЙМФРЕЙМ: 5M · ЧАСЫ EST</div>
+        </div>
+        <div class="phase-progress" id="buy-p3-prog">0/2</div>
+      </div>
+      <div class="items" id="buy-p3">
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Вход происходит в Kill Zone: London (02:00–05:00) или NY Open (09:30–11:00) EST</div>
+            <div class="item-note">Вне Kill Zone — не входим. Ждём следующей сессии.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Judas Swing вниз уже был — ложное движение вниз для сбора SSL перед ростом</div>
+            <div class="item-note">Если Judas Swing ещё не было — ждём его. Не покупаем на первом движении вверх.</div>
+          </div>
+        </div>
+      </div>
+      <div class="blocker">
+        <span>⛔</span>
+        <span>Сейчас 05:00–07:00 EST (Мёртвое время)? — СТОП. Не торгуем. Ждём 07:00 или 09:30.</span>
+      </div>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-num">4</div>
+        <div class="phase-info">
+          <div class="phase-title" style="color:var(--bull)">ТОЧКА ВХОДА</div>
+          <div class="phase-tf">ТАЙМФРЕЙМ: 5M → 1M</div>
+        </div>
+        <div class="phase-progress" id="buy-p4-prog">0/3</div>
+      </div>
+      <div class="items" id="buy-p4">
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Цена вернулась в бычий FVG созданный Displacement-ом на 5M или 1M</div>
+            <div class="item-note">Вход — в тело FVG (между свечой 1 и свечой 3). Идеально — у CE (50% FVG).</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Тела свечей НЕ закрываются ниже нижней границы FVG</div>
+            <div class="item-note">Если тело закрылось ниже — FVG пробит. Сетап отменяется.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Стоп поставлен: 1 тик НИЖЕ свечи №1 FVG (не ниже круглого уровня)</div>
+            <div class="item-note">Стоп должен быть конкретным числом ДО входа в сделку.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 5 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-num">5</div>
+        <div class="phase-info">
+          <div class="phase-title" style="color:var(--bull)">УПРАВЛЕНИЕ СДЕЛКОЙ</div>
+          <div class="phase-tf">ПОСЛЕ ВХОДА</div>
+        </div>
+        <div class="phase-progress" id="buy-p5-prog">0/3</div>
+      </div>
+      <div class="items" id="buy-p5">
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Частичная фиксация (50% позиции) на первой цели — CE ближайшего FVG выше или Equal Highs</div>
+            <div class="item-note">Partial убирает психологическое давление. Остаток едет к главной цели.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Стоп передвинут в безубыток после взятия первой цели</div>
+            <div class="item-note">Бесплатная сделка = нет стресса = холодная голова.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'buy')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Главная цель — Draw on Liquidity (BSL / незакрытый FVG на 1H–1D)</div>
+            <div class="item-note">Не закрывать раньше времени. Дать алгоритму доставить цену.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCORE -->
+    <div class="scorebar">
+      <div class="score-label">ГОТОВНОСТЬ</div>
+      <div class="bar-wrap"><div class="bar-fill bar-buy" id="buy-bar"></div></div>
+      <div class="score-val" id="buy-score" style="color:var(--bull)">0/14</div>
+      <div class="verdict verdict-no" id="buy-verdict">НЕ ВХОДИТЬ</div>
+    </div>
+
+  </div>
+
+  <!-- SELL PANEL -->
+  <div class="panel" id="panel-sell">
+
+    <!-- PHASE 1 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-num">1</div>
+        <div class="phase-info">
+          <div class="phase-title" style="color:var(--bear)">КОНТЕКСТ — СТАРШИЙ ТФ</div>
+          <div class="phase-tf">ТАЙМФРЕЙМ: 1W → 1D</div>
+        </div>
+        <div class="phase-progress" id="sell-p1-prog">0/3</div>
+      </div>
+      <div class="items" id="sell-p1">
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">На 1D цена находится в зоне ПРЕМИУМА (выше 50% диапазона последних 20 дней)</div>
+            <div class="item-note">Premium = продаём дорого. Discount = не продаём.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Есть чёткий BSL (Equal Highs / Swing High) который был СНЯТ или цена к нему движется</div>
+            <div class="item-note">Алгоритм идёт за ликвидностью вверх → разворот вниз.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Draw on Liquidity ВНИЗУ — незакрытый FVG или SSL ниже текущей цены</div>
+            <div class="item-note">Цели должны быть ниже. Если целей нет — не продаём.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-num">2</div>
+        <div class="phase-info">
+          <div class="phase-title" style="color:var(--bear)">СЛОМ СТРУКТУРЫ</div>
+          <div class="phase-tf">ТАЙМФРЕЙМ: 1H → 4H</div>
+        </div>
+        <div class="phase-progress" id="sell-p2-prog">0/3</div>
+      </div>
+      <div class="items" id="sell-p2">
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">CHoCH вниз зафиксирован на 1H — цена пробила предыдущий Higher Low телом свечи</div>
+            <div class="item-note">Только тело! Вик не считается.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">После CHoCH был медвежий Displacement — резкая импульсная свеча вниз с FVG</div>
+            <div class="item-note">Displacement = подтверждение что алгоритм активен в этом направлении.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">MSS подтверждён — цена не вернулась выше BSL который был снят</div>
+            <div class="item-note">Если цена вернулась выше BSL — сетап отменяется.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-num">3</div>
+        <div class="phase-info">
+          <div class="phase-title" style="color:var(--bear)">ВРЕМЯ И СЕССИЯ</div>
+          <div class="phase-tf">ТАЙМФРЕЙМ: 5M · ЧАСЫ EST</div>
+        </div>
+        <div class="phase-progress" id="sell-p3-prog">0/2</div>
+      </div>
+      <div class="items" id="sell-p3">
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Вход происходит в Kill Zone: London (02:00–05:00) или NY Open (09:30–11:00) EST</div>
+            <div class="item-note">Вне Kill Zone — не входим. Ждём следующей сессии.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Judas Swing вверх уже был — ложное движение вверх для сбора BSL перед падением</div>
+            <div class="item-note">Если Judas Swing ещё не было — ждём его. Не продаём на первом движении вниз.</div>
+          </div>
+        </div>
+      </div>
+      <div class="blocker">
+        <span>⛔</span>
+        <span>Сейчас 05:00–07:00 EST (Мёртвое время)? — СТОП. Не торгуем. Ждём 07:00 или 09:30.</span>
+      </div>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-num">4</div>
+        <div class="phase-info">
+          <div class="phase-title" style="color:var(--bear)">ТОЧКА ВХОДА</div>
+          <div class="phase-tf">ТАЙМФРЕЙМ: 5M → 1M</div>
+        </div>
+        <div class="phase-progress" id="sell-p4-prog">0/3</div>
+      </div>
+      <div class="items" id="sell-p4">
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Цена вернулась в медвежий FVG созданный Displacement-ом на 5M или 1M</div>
+            <div class="item-note">Вход — в тело FVG (между свечой 1 и свечой 3). Идеально — у CE (50% FVG).</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Тела свечей НЕ закрываются выше верхней границы FVG</div>
+            <div class="item-note">Если тело закрылось выше — FVG пробит. Сетап отменяется.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Стоп поставлен: 1 тик ВЫШЕ свечи №1 FVG (не выше круглого уровня)</div>
+            <div class="item-note">Стоп должен быть конкретным числом ДО входа в сделку.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 5 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-num">5</div>
+        <div class="phase-info">
+          <div class="phase-title" style="color:var(--bear)">УПРАВЛЕНИЕ СДЕЛКОЙ</div>
+          <div class="phase-tf">ПОСЛЕ ВХОДА</div>
+        </div>
+        <div class="phase-progress" id="sell-p5-prog">0/3</div>
+      </div>
+      <div class="items" id="sell-p5">
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Частичная фиксация (50% позиции) на первой цели — CE ближайшего FVG ниже или Equal Lows</div>
+            <div class="item-note">Partial убирает психологическое давление. Остаток едет к главной цели.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Стоп передвинут в безубыток после взятия первой цели</div>
+            <div class="item-note">Бесплатная сделка = нет стресса = холодная голова.</div>
+          </div>
+        </div>
+        <div class="item" onclick="toggle(this,'sell')">
+          <div class="checkbox"></div>
+          <div class="item-content">
+            <div class="item-text">Главная цель — Draw on Liquidity (SSL / незакрытый FVG на 1H–1D)</div>
+            <div class="item-note">Не закрывать раньше времени. Дать алгоритму доставить цену.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCORE -->
+    <div class="scorebar">
+      <div class="score-label">ГОТОВНОСТЬ</div>
+      <div class="bar-wrap"><div class="bar-fill bar-sell" id="sell-bar"></div></div>
+      <div class="score-val" id="sell-score" style="color:var(--bear)">0/14</div>
+      <div class="verdict verdict-no" id="sell-verdict">НЕ ВХОДИТЬ</div>
+    </div>
+
+  </div>
+
+  <!-- IRON RULES -->
+  <div class="rules">
+    <div class="rules-header">⚠ ЖЕЛЕЗНЫЕ ПРАВИЛА — НЕ НАРУШАТЬ НИКОГДА</div>
+    <div class="rules-grid">
+      <div class="rule-item"><span class="rule-icon">🚫</span>Нет чёткого Bias на 1D → не торгуем вообще</div>
+      <div class="rule-item"><span class="rule-icon">🚫</span>Нет FVG после Displacement → нет входа</div>
+      <div class="rule-item"><span class="rule-icon">🚫</span>Вне Kill Zone → ждём. Никаких исключений</div>
+      <div class="rule-item"><span class="rule-icon">🚫</span>Вик пробил уровень — не считается. Только тело</div>
+      <div class="rule-item"><span class="rule-icon">🚫</span>Риск больше 1% депозита → не входим</div>
+      <div class="rule-item"><span class="rule-icon">🚫</span>Дни CPI/NFP/FOMC → не торгуем до выхода новостей</div>
+      <div class="rule-item"><span class="rule-icon">🚫</span>Сетап «почти» совпадает → это НЕ сетап</div>
+      <div class="rule-item"><span class="rule-icon">🚫</span>FOMO — цена ушла без тебя → следующая возможность</div>
+    </div>
+  </div>
+
+  <div class="disclaimer">⚠ Только для образовательных целей · ICT 2026 · Не является финансовой рекомендацией</div>
+
+</div>
+
+<script>
+const TOTAL = 14;
+
+function toggle(item, side) {
+  item.classList.toggle('checked');
+  item.querySelector('.checkbox').textContent = item.classList.contains('checked') ? '✓' : '';
+  updateScore(side);
+}
+
+function updateScore(side) {
+  const total = document.querySelectorAll(`#panel-${side} .item`).length;
+  const checked = document.querySelectorAll(`#panel-${side} .item.checked`).length;
+  const pct = checked / total * 100;
+
+  document.getElementById(`${side}-bar`).style.width = pct + '%';
+  document.getElementById(`${side}-score`).textContent = `${checked}/${total}`;
+
+  // Phase progress
+  [1,2,3,4,5].forEach(p => {
+    const phaseItems = document.querySelectorAll(`#${side}-p${p} .item`);
+    const phaseChecked = document.querySelectorAll(`#${side}-p${p} .item.checked`).length;
+    const el = document.getElementById(`${side}-p${p}-prog`);
+    if (el) el.textContent = `${phaseChecked}/${phaseItems.length}`;
+  });
+
+  const verdict = document.getElementById(`${side}-verdict`);
+  if (pct < 50) {
+    verdict.textContent = 'НЕ ВХОДИТЬ';
+    verdict.className = 'verdict verdict-no';
+  } else if (pct < 85) {
+    verdict.textContent = 'ПОЧТИ ГОТОВ';
+    verdict.className = 'verdict verdict-ok';
+  } else {
+    verdict.textContent = '✓ МОЖНО ВХОДИТЬ';
+    verdict.className = 'verdict verdict-go';
+  }
+}
+
+function switchTab(side) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab-${side}`).classList.add('active');
+  document.getElementById(`panel-${side}`).classList.add('active');
+}
+
+function resetAll() {
+  document.querySelectorAll('.item').forEach(item => {
+    item.classList.remove('checked');
+    item.querySelector('.checkbox').textContent = '';
+  });
+  updateScore('buy');
+  updateScore('sell');
+}
+</script>
+</body>
+</html>
